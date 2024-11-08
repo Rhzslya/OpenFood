@@ -5,14 +5,12 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.NumberFormat;
-import java.util.Locale;
+import java.util.*;
 import java.util.List;
-import java.util.ArrayList;
 
 class Menu {
-    String nama;
+    String nama,kategori;
     int harga;
-    String kategori;
 
     public Menu(String nama, int harga, String kategori) {
         this.nama = nama;
@@ -22,8 +20,7 @@ class Menu {
 }
 
 public class Main extends JFrame {
-
-    // Daftar menu tanpa perlu memasukkan data satu per satu
+    // Daftar menu
     private static final Menu[] menuList = {
             new Menu("Nasi Goreng", 15000, "makanan"),
             new Menu("Mie Goreng", 15000, "makanan"),
@@ -37,15 +34,70 @@ public class Main extends JFrame {
             new Menu("Air Mineral", 3000, "minuman"),
     };
 
+    // Method Konversi Ke Rupiah
     private String formatIDR(int amount) {
         NumberFormat formatIDR = NumberFormat.getCurrencyInstance(new Locale("id", "ID"));
         return formatIDR.format(amount);
+    }
+
+    //Format Data Array
+    private String formatDataArray(List<String> dataList) {
+        Set<String> uniqueData = new HashSet<>(dataList);
+        StringBuilder formattedData = new StringBuilder();
+
+        int nomor = 1;
+        for (String data : uniqueData) {
+            formattedData.append(nomor).append(". ").append(data).append("\n");
+            nomor++;
+        }
+
+        return formattedData.toString();
+    }
+
+    //Template Struk
+    private void template() {
+        template.append("------------------------------| Daftar Menu |-----------------------------\n");
+        template.append("===============================================\n");
+
+        // Menampilkan menu makanan
+        template.append("Makanan:\n");
+        template.append("Nasi Goreng - ").append(formatIDR(15000)).append("\n");
+        template.append("Mie Goreng - ").append(formatIDR(15000)).append("\n");
+        template.append("Mie Rebus - ").append(formatIDR(15000)).append("\n");
+        template.append("Kwetiau Goreng - ").append(formatIDR(15000)).append("\n");
+        template.append("Kwetiau Rebus - ").append(formatIDR(15000)).append("\n");
+
+        // Menampilkan menu minuman
+        template.append("\nMinuman:\n");
+        template.append("Es Teh - ").append(formatIDR(5000)).append("\n");
+        template.append("Es Jeruk - ").append(formatIDR(8000)).append("\n");
+        template.append("Jus Alpukat - ").append(formatIDR(10000)).append("\n");
+        template.append("Jus Mangga - ").append(formatIDR(10000)).append("\n");
+        template.append("Air Mineral - ").append(formatIDR(3000)).append("\n");
+
+        template.append("===============================================\n");
+
+        template.append("----------------------------| Daftar Pesanan |---------------------------\n");
+        template.append("===============================================\n");
+
+        strukArea.setText(template.toString());
+    }
+
+    //Reset Pesanan
+    private void resetPesanan(){
+        daftarPesanan.clear();
+        pesananStruk.setLength(0);
+        totalBiaya = 0;
+        nomerPesanan = 1;
+        minumanDipesan.clear();
     }
 
     private JComboBox<String> menuDropdown;
     private JTextField jumlahField;
     private List<String> daftarPesanan = new ArrayList<>();
     private int nomerPesanan = 1;
+    private List<String> minumanDipesan = new ArrayList<>();
+    private List<String> makananDipesan = new ArrayList<>();
     private JTextArea strukArea;
     private JButton tambahButton;
     private JButton cetakButton;
@@ -89,10 +141,9 @@ public class Main extends JFrame {
         strukArea.setEditable(false);
         add(new JScrollPane(strukArea));
 
-
         // Tombol Cetak
         cetakButton = new JButton("Cetak Struk");
-        cetakButton.setEnabled(false); // Menyembunyikan tombol cetak
+        cetakButton.setEnabled(false);
         add(cetakButton);
 
         // Event handler untuk tombol tambah
@@ -114,90 +165,92 @@ public class Main extends JFrame {
         template();
     }
 
-    private void template() {
-        template.append("----------------------------| Daftar Pesanan |---------------------------\n");
-        template.append("===============================================\n");
-        strukArea.setText(template.toString());
-    }
-
-    private void resetPesanan(){
-        daftarPesanan.clear();
-        pesananStruk.setLength(0); // Mengosongkan StringBuilder pesanan
-        totalBiaya = 0; // Reset total biaya
-        nomerPesanan = 1;
-    }
-
     private void tambahPesanan() {
         if (!cetakButton.isEnabled()) {
             resetPesanan();
-            // Tetap pertahankan template struk yang sudah ada
-            strukArea.setText(template.toString()); // Menampilkan template awal
+            strukArea.setText(template.toString());
         }
 
         String selectedMenu = (String) menuDropdown.getSelectedItem();
         String jumlahText = jumlahField.getText().trim();
-        // Cek apakah jumlah tidak kosong
-        if (jumlahText.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Masukkan jumlah pesanan terlebih dahulu.", "Error", JOptionPane.ERROR_MESSAGE);
+
+        if (jumlahText.isEmpty() || !jumlahText.matches("\\d+")) {
+            JOptionPane.showMessageDialog(this, "Masukkan jumlah pesanan yang valid.", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
         int jumlah = Integer.parseInt(jumlahText);
-
-        // Cari harga dari menu yang dipilih tanpa perulangan eksplisit
         int hargaItem = 0;
         String namaItem = "";
+        boolean isMinuman = false;
+        boolean isMakanan = false;
+        // Menentukan harga dan nama item berdasarkan pilihan
         if (selectedMenu.contains("Nasi Goreng")) {
             hargaItem = 15000 * jumlah;
             namaItem = "Nasi Goreng";
+            isMakanan = true;
         } else if (selectedMenu.contains("Mie Goreng")) {
             hargaItem = 15000 * jumlah;
             namaItem = "Mie Goreng";
+            isMakanan = true;
         } else if (selectedMenu.contains("Mie Rebus")) {
             hargaItem = 15000 * jumlah;
             namaItem = "Mie Rebus";
+            isMakanan = true;
         } else if (selectedMenu.contains("Kwetiau Goreng")) {
             hargaItem = 15000 * jumlah;
             namaItem = "Kwetiau Goreng";
+            isMakanan = true;
         } else if (selectedMenu.contains("Kwetiau Rebus")) {
             hargaItem = 15000 * jumlah;
             namaItem = "Kwetiau Rebus";
+            isMakanan = true;
         } else if (selectedMenu.contains("Es Teh")) {
             hargaItem = 5000 * jumlah;
             namaItem = "Es Teh";
+            isMinuman = true;  // Tandai bahwa ini adalah minuman
         } else if (selectedMenu.contains("Es Jeruk")) {
             hargaItem = 8000 * jumlah;
             namaItem = "Es Jeruk";
+            isMinuman = true;
         } else if (selectedMenu.contains("Jus Alpukat")) {
             hargaItem = 10000 * jumlah;
             namaItem = "Jus Alpukat";
+            isMinuman = true;
         } else if (selectedMenu.contains("Jus Mangga")) {
             hargaItem = 10000 * jumlah;
             namaItem = "Jus Mangga";
+            isMinuman = true;
         } else {
             hargaItem = 3000 * jumlah;
             namaItem = "Air Mineral";
+            isMinuman = true;
+        }
+
+        // Tambahkan pesanan ke list sesuai dengan kategori
+        if (isMinuman) {
+            minumanDipesan.addAll(Collections.nCopies(jumlah, namaItem));
+        } else if (isMakanan) {
+            makananDipesan.addAll(Collections.nCopies(jumlah, namaItem));
+        }
+
+        // Cek jika jumlah pesanan sudah mencapai batas maksimal 4 menu
+        if (daftarPesanan.size() >= 4) {
+            JOptionPane.showMessageDialog(this, "Maksimal 4 menu yang bisa dipesan.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
         }
 
         totalBiaya += hargaItem;
 
-        // Format harga menggunakan metode formatIDR
-        String hargaItemFormatted = formatIDR(hargaItem);
-
         // Tambahkan pesanan ke struk
         pesananStruk.append(nomerPesanan++ + ". " + namaItem + " " + jumlah + "x = " + formatIDR(hargaItem) + "\n");
-        strukArea.setText(template.toString() + pesananStruk.toString()); // Menggabungkan template dengan pesanan
+        strukArea.setText(template.toString() + pesananStruk.toString());
         jumlahField.setText("");
         daftarPesanan.add(pesananStruk.toString());
-        jumlahField.setText("");
-
-        cetakButton.setEnabled(true); // Menyembunyikan tombol cetak
+        cetakButton.setEnabled(true);
     }
 
-
-
     private void cetakStruk() {
-
         // Hitung pajak dan biaya pelayanan
         int biayaPajakNonFormat = (int) (0.1 * totalBiaya);
         int biayaPelayananNonFormat = 20000;
@@ -207,17 +260,33 @@ public class Main extends JFrame {
         int totalDiskon = (totalSetelahPajakNonFormat > 100000) ? (int) (0.1 * totalSetelahPajakNonFormat) : 0;
         int grandTotal = totalSetelahPajakNonFormat - totalDiskon;
 
+        // Diskon Beli Satu Gratis Satu Kategori Minuman
+        String minumanGratis = "";
+        Set<String> uniqueMinuman = new HashSet<>(minumanDipesan);
+
+        // Mengecek jika ada lebih dari 1 jenis minuman dan total biaya lebih dari 50000
+        if (uniqueMinuman.size() > 0 && uniqueMinuman.size() < 2 && totalBiaya > 50000) {
+            minumanGratis = "Selamat Anda Mendapatkan 1 Minuman Gratis\n" + formatDataArray(minumanDipesan);
+        } else if (uniqueMinuman.size() >= 2 && totalBiaya > 50000) {
+            minumanGratis = "Selamat Anda Mendapatkan 1 Minuman Gratis (Pilih Salah Satu)\n" + formatDataArray(minumanDipesan);
+        }
+
+
         // Tampilkan struk dengan format IDR menggunakan metode formatIDR
         strukArea.append("=================| Terima Kasih |================");
         strukArea.append("\nTotal Biaya: " + formatIDR(totalBiaya));
+        if (minumanGratis.length() > 0) {
+            strukArea.append("\n" + minumanGratis);
+        }
         strukArea.append("\nPajak (10%): " + formatIDR(biayaPajakNonFormat));
         strukArea.append("\nBiaya Pelayanan: " + formatIDR(biayaPelayananNonFormat));
+        strukArea.append("\nTotal Sebelum Diskon: " + formatIDR(totalBiaya + biayaPajakNonFormat + biayaPelayananNonFormat));
 
         if (totalDiskon > 0) {
             strukArea.append("\nDiskon 10%: " + formatIDR(totalDiskon));
         }
 
-        strukArea.append("\nTotal: " + formatIDR(grandTotal));
+        strukArea.append("\nTotal Akhir: " + formatIDR(grandTotal));
 
         // Reset semua data setelah cetak struk
         resetPesanan();
